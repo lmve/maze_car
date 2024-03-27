@@ -1,0 +1,273 @@
+C51 COMPILER V9.60.0.0   FAST1                                                             11/13/2022 19:47:37 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE FAST1
+OBJECT MODULE PLACED IN .\Objects\fast1.obj
+COMPILER INVOKED BY: D:\mdk\C51\BIN\C51.EXE fast1.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\f
+                    -ast1.lst) TABS(2) OBJECT(.\Objects\fast1.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include "mouse.h"
+   3          #define  uchar unsigned char
+   4          #define  uint unsigned int
+   5            char way[17] = {0 ,0, 1, 1, 0 , 0 , 1 , 1 , 1 , 0 , 1 , 1 , 0 , 0 };//路径数据
+   6            char top1 = 13;
+   7            sbit beep = P3^7;
+   8            //原地转圈
+   9            uchar code run1[] = {0x11,0x33,0x22,0x66,0x44,0xcc,0x88,0x99,0x11};
+  10            //直行
+  11            uchar code run2[] = {0x11,0x39,0x28,0x6c,0x44,0xc6,0x82,0x93,0x11};
+  12            uchar direction = 2;
+  13            
+  14            /* * * * * * * * * * * * * * * * * * * * * * * * * *
+  15           *传感器单元
+  16           * * * * * * * * * * * * * * * * * * * * * * * * * *
+  17           *
+  18           *红外发射
+  19           */
+  20          void mouse_ir_on(uchar group_no)
+  21          {
+  22   1        A0 = (group_no) & 0x01;
+  23   1        A1 = (group_no) & 0x02;
+  24   1        A2 = (group_no) & 0x04;
+  25   1      }
+  26          
+  27          /*
+  28           *设置T2自动重装载寄存器和计数器
+  29           */
+  30          void setTime2(uint us)
+  31          {
+  32   1        TH2 = (65536 - us) % 256;
+  33   1        RCAP2H = (65536 - us) / 256;
+  34   1        TL2 = (65536 -us) % 256;
+  35   1        RCAP2L = (65536 - us) % 256;
+  36   1      }
+  37          /*
+  38           *定时计数器初始化
+  39           */
+  40          void initTime2()
+  41          {
+  42   1        EA = 1;
+  43   1        ET2 = 1;
+  44   1        setTime2(5000);//设置5ms中断一次
+  45   1        TR2 = 1;
+  46   1      }
+  47            /*
+  48           *延时1ms
+  49           */
+  50          void delayms(uint n)
+  51          {
+  52   1        uchar i,j;
+  53   1        for(j=n;j>0;j--)
+  54   1        for(i=112;i>0;i--);
+C51 COMPILER V9.60.0.0   FAST1                                                             11/13/2022 19:47:37 PAGE 2   
+
+  55   1      }
+  56            void voice()
+  57          {
+  58   1          uchar j = 0;
+  59   1          for(j = 10;j>0;j--){
+  60   2            beep = ~beep;
+  61   2            delayms(10);
+  62   2          }
+  63   1          for(j = 100;j>0;j--){
+  64   2            beep = 1;
+  65   2            delayms(10);
+  66   2          }
+  67   1      }
+  68            /*
+  69           *冲刺
+  70           */
+  71          void run_fast()
+  72          {
+  73   1          uchar i,j,k,l = 21;
+  74   1        while(l--){
+  75   2          for(i=0;i<5;i++)
+  76   2          {
+  77   3            for(j=8;j>0;j--)
+  78   3            {
+  79   4              P1 = run2[j];
+  80   4              delayms(2);
+  81   4            }
+  82   3          }
+  83   2            if((irLU==1) && (irC == 0))
+  84   2            {
+  85   3      //          voice();
+  86   3                for(k = 0 ;k < 3; k++)
+  87   3              {
+  88   4                for(j=0;j<8;j++)
+  89   4                {
+  90   5                  P1 = run1[j];
+  91   5                  delayms(2);
+  92   5                }
+  93   4              }
+  94   3              
+  95   3            }
+  96   2            if((irRU==1) && (irC == 0))
+  97   2            {   
+  98   3      //          voice();
+  99   3                for(k = 0;k < 3; k++)
+ 100   3              {
+ 101   4                for(j=8;j>0;j--)
+ 102   4                {
+ 103   5                  P1 = run1[j];
+ 104   5                  delayms(2);
+ 105   5                }
+ 106   4              }
+ 107   3            }
+ 108   2          }
+ 109   1      }
+ 110          
+ 111          /*
+ 112           *右转
+ 113           */
+ 114          void turn_right()
+ 115          {
+ 116   1        uchar i,j;
+C51 COMPILER V9.60.0.0   FAST1                                                             11/13/2022 19:47:37 PAGE 3   
+
+ 117   1        for(i=0;i<52;i++)
+ 118   1        {
+ 119   2          for(j=0;j<8;j++)
+ 120   2          {
+ 121   3            P1 = run1[j];
+ 122   3            delayms(2);
+ 123   3          }
+ 124   2        }
+ 125   1        direction = (direction + 1) % 4;
+ 126   1      }
+ 127          /*
+ 128           *左转
+ 129           */
+ 130          void turn_left()
+ 131          {
+ 132   1        uchar i,j;
+ 133   1        for(i=0;i<52;i++)
+ 134   1        {
+ 135   2          for(j=8;j>0;j--)
+ 136   2          {
+ 137   3            P1 = run1[j];
+ 138   3            delayms(2);
+ 139   3          }
+ 140   2        }
+ 141   1        direction = (direction + 3) % 4;
+ 142   1      }
+ 143          /*
+ 144           *掉头
+ 145           */
+ 146          void back()
+ 147          {
+ 148   1        uchar i,j;
+ 149   1        for(i=0;i<102;i++)
+ 150   1        {
+ 151   2          for(j=0;j<8;j++)
+ 152   2          {
+ 153   3            P1 = run1[j];
+ 154   3            delayms(2);
+ 155   3          }
+ 156   2        }
+ 157   1        direction = (direction + 2) % 4;
+ 158   1      }
+ 159            
+ 160            /* * * * * * * * * * * * * 
+ 161           * 第三部分 冲刺
+ 162           * 冲刺
+ 163           */
+ 164          void run()
+ 165          {
+ 166   1      
+ 167   1        back();
+ 168   1        while(top1 > -1)
+ 169   1        {
+ 170   2          switch(direction){
+ 171   3            case 0:
+ 172   3              {
+ 173   4          
+ 174   4            switch(way[top1])
+ 175   4            {
+ 176   5              case 1: turn_right(); run_fast()  ; break;
+ 177   5              case 0: run_fast() ; break; 
+ 178   5            }
+C51 COMPILER V9.60.0.0   FAST1                                                             11/13/2022 19:47:37 PAGE 4   
+
+ 179   4            break;
+ 180   4          }
+ 181   3            case 1:{
+ 182   4              
+ 183   4            
+ 184   4            switch(way[top1])
+ 185   4            {
+ 186   5              case 1: run_fast() ;break;
+ 187   5              case 0: turn_left(); run_fast() ; break; 
+ 188   5            } 
+ 189   4              break;
+ 190   4          }
+ 191   3           }
+ 192   2          top1--;
+ 193   2        } 
+ 194   1      
+ 195   1      } 
+ 196          
+ 197          
+ 198          
+ 199          void main(){
+ 200   1        initTime2();
+ 201   1        delayms(3);
+ 202   1        run();
+ 203   1        voice();
+ 204   1        voice();
+ 205   1        voice();
+ 206   1        while(1);
+ 207   1        
+ 208   1      }
+ 209          
+ 210          /*
+ 211           *中断服务函数
+ 212           */
+ 213          void time2() interrupt 5{ // TIM2中断服务函数
+ 214   1          static bit ir = 0;
+ 215   1          static unsigned char n=1;
+ 216   1          TF2 = 0;
+ 217   1          if(!ir) {
+ 218   2              mouse_ir_on(n-1);
+ 219   2          }else{
+ 220   2              if(n==1){
+ 221   3                  if(irR1)  irC=0;
+ 222   3                  else      irC=1;
+ 223   3              }else if(n==2){
+ 224   3                  if(irR2)  irLU=0;
+ 225   3                  else      irLU=1;
+ 226   3              }else if(n==3){
+ 227   3                  if(irR3)  irL=0;
+ 228   3                  else      irL=1;
+ 229   3              }else if(n==4){
+ 230   3                  if(irR4)  irR=0;
+ 231   3                  else      irR=1;
+ 232   3              }else if(n==5){
+ 233   3                  if(irR5)  irRU=0;
+ 234   3                  else      irRU=1;
+ 235   3              }
+ 236   2          }
+ 237   1          if(ir)  n++;
+ 238   1          if(n>5) n=1;
+ 239   1          ir=~ir;
+ 240   1      }
+C51 COMPILER V9.60.0.0   FAST1                                                             11/13/2022 19:47:37 PAGE 5   
+
+ 241          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    790    ----
+   CONSTANT SIZE    =     18    ----
+   XDATA SIZE       =     25       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
